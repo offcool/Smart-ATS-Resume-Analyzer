@@ -24,7 +24,7 @@ def input_pdf_text(resume_file_object): # Expecting a file object now
         return "Error: Could not read PDF content due to PDF format issue." # More specific error message
     except Exception as e: # Catch any other potential errors
         print(f"Error extracting text from PDF: {e}")
-        return "Error: Could not extract text from PDF." # General error message
+        return "Error: Could not extract text from PDF." 
     return text.strip()
 
 # Function to get response from Gemini API

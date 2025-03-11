@@ -1,6 +1,6 @@
 # Smart ATS Resume Analyzer V2
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)  ## Description
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) 
 
 Smart ATS Resume Analyzer is a web application designed to help job seekers optimize their resumes for Applicant Tracking Systems (ATS).  By analyzing a resume against a job description using AI, this tool provides valuable insights to improve resume content and increase the chances of passing through automated screening processes.
 
