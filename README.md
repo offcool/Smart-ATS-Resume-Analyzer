@@ -1,154 +1,141 @@
-# Smart ATS Resume Analyzer (Flask Backend + React Frontend)
+# Smart ATS Resume Analyzer V2
 
-[![Deployment Status](https://ats-modified-8ee4avlk4-semehs-projects.vercel.app/)]
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)  ## Description
 
-## Overview
+Smart ATS Resume Analyzer is a web application designed to help job seekers optimize their resumes for Applicant Tracking Systems (ATS).  By analyzing a resume against a job description using AI, this tool provides valuable insights to improve resume content and increase the chances of passing through automated screening processes.
 
-This project is a Smart Applicant Tracking System (ATS) Resume Analyzer designed to help job seekers optimize their search.  It evaluates resumes against job descriptions, providing a match percentage, identifying missing keywords, and generating a profile summary.
+This application is built as a **two-part system**:
 
-This repository is a modified version of an original Streamlit application.  The key enhancement is the separation of the application into a **Flask backend** and a **React frontend**. This architecture offers improved scalability, maintainability, and a better user experience, and is specifically configured for deployment on **Vercel**.
+*   **Backend (Flask):**  A Python Flask API that handles PDF resume processing, interacts with the Gemini AI model for analysis, and serves API endpoints.
+*   **Frontend (React):** A user-friendly React web application that allows users to upload their resume (PDF) and paste a job description, then displays the AI-powered analysis results.
 
-**Key Features:**
+## Key Features
 
-*   **ATS-Style Resume Analysis:**  Evaluates resumes against job descriptions, mimicking Applicant Tracking Systems.
-*   **Google Gemini API Powered:**  Utilizes the advanced Google Gemini API for accurate and insightful resume analysis, specifically tailored for tech roles (Software Engineering, Data Science, Big Data Engineering, Data Analysis).
-*   **Key Metrics:** Provides a "JD Match" percentage and identifies crucial "Missing Keywords" to help users tailor their resumes.
-*   **Profile Summary:**  Generates a concise summary highlighting the resume's strengths and weaknesses in relation to the job description.
-*   **Flask Backend (Python):**  Handles the resume analysis logic using the Gemini API and provides an API endpoint for the frontend.
-*   **React Frontend:**  Offers a user-friendly interface for pasting job descriptions and uploading resumes (PDF format), displaying analysis results in a clear and organized manner.
-*   **Vercel Deployment Ready:**  Configuration files (`vercel.json`) are included for easy deployment to the Vercel platform.
+*   **Resume Upload (PDF):** Users can upload their resume in PDF format for analysis.
+*   **Job Description Input:** Users can paste job descriptions to compare against their resume.
+*   **AI-Powered Analysis:** Utilizes the Google Gemini AI model to analyze resume content and job description relevance.
+*   **Job Description Match Score:** Provides a percentage-based score indicating how well the resume matches the job description.
+*   **Missing Keywords Identification:**  Highlights keywords from the job description that are missing from the resume, indicating areas for improvement.
+*   **Professional Profile Summary:** Generates a summary of the resume's strengths and weaknesses in relation to the job description.
+*   **Clear and User-Friendly Frontend:**  Built with React for an intuitive user experience.
 
-## Architecture
+## Challenges and Solutions
 
-The application is structured with a clear separation of concerns:
+During the development of this application, we encountered and successfully resolved several challenges:
 
-*   **Frontend ( `resume-evaluator` directory):**
-    *   Built with **React**.
-    *   Handles user interface, input forms (job description text area, resume file upload), and displays results.
-    *   Communicates with the backend API to send resume and job description data and receive analysis results.
-    *   Uses `fetch` API to interact with the Flask backend.
-    *   Located in the `resume-evaluator` directory.
+*   **PDF Resume Processing:**
+    *   **Challenge:** Extracting text content accurately from PDF resumes for AI analysis.
+    *   **Solution:** Implemented PDF parsing in the Flask backend using the `PyPDF2` library to reliably extract text content from uploaded PDF files.  Error handling was added to manage potentially corrupted or unreadable PDFs.
 
-*   **Backend ( `app.py` ):**
-    *   Built with **Flask (Python)**.
-    *   Exposes an API endpoint `/api/analyze` that receives resume and job description data.
-    *   Uses `PyPDF2` to extract text from uploaded PDF resumes.
-    *   Leverages the `google-generativeai` library and the Google Gemini API to perform resume analysis based on the provided prompt.
-    *   Returns analysis results in **JSON format**.
-    *   Located in the root directory as `app.py`.
+*   **Cross-Origin Resource Sharing (CORS) Issues:**
+    *   **Challenge:**  The React frontend running on `localhost:3000` was blocked from making API requests to the Flask backend running on `localhost:5000` due to browser CORS policies. This resulted in "fetch failed" errors and prevented communication between the frontend and backend.
+    *   **Solution:** Enabled CORS in the Flask backend using the `flask-cors` library. Configured CORS to specifically allow requests from `http://localhost:3000` (for development) and the eventual Vercel frontend URL (for production).
 
-*   **Deployment (Vercel):**
-    *   Configured for deployment on **Vercel** using `vercel.json`.
-    *   Vercel handles both the Flask backend and the React frontend deployment.
+*   **JSON Parsing Errors:**
+    *   **Challenge:**  Initially, the React frontend was encountering "Unexpected token '<'..." errors when receiving responses from the Flask backend, even with a `200 OK` status. This indicated that the frontend was expecting JSON but receiving HTML or invalid JSON.
+    *   **Solution:** Implemented more robust JSON cleaning in the Flask backend's `clean_and_parse_json` function. This involved using regular expressions to remove extra whitespace, markdown code block markers (like ```json), and ensure only valid JSON is returned to the frontend.  Detailed error logging was added in both frontend and backend to diagnose parsing issues effectively.
 
-## Local Development
-
-To run this application locally, you need to set up both the backend (Flask) and the frontend (React) separately.
-
-**Backend (Flask API):**
-
-1.  **Prerequisites:**
-    *   Python 3.12 installed
-    *   pip package installer
-    *   Google Gemini API Key (Get one from [Google AI Studio](https://makersuite.google.com/app/apikey))
-
-2.  **Set up Environment Variables:**
-    *   Create a `.env` file in the root directory of the repository (where `app.py` is located).
-    *   Add your Google Gemini API key to the `.env` file:
-        ```
-        GOOGLE_PRO_API_KEY=YOUR_API_KEY_HERE
-        ```
-
-3.  **Install Python Backend Dependencies:**
-    Navigate to the root directory (where `app.py` is) in your terminal and run:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Run the Flask Backend:**
-    ```bash
-    python app.py
-    ```
-    The Flask backend will start running locally (usually on `http://127.0.0.1:5000/`).
-
-**Frontend (React App):**
-
-1.  **Prerequisites:**
-    *   Node.js and npm installed
-
-2.  **Navigate to the Frontend Directory:**
-    ```bash
-    cd resume-evaluator
-    ```
-
-3.  **Install Frontend Dependencies:**
-    ```bash
-    npm install
-    ```
-
-4.  **Start the React Development Server:**
-    ```bash
-    npm start
-    ```
-    The React frontend will open in your browser (usually on `http://localhost:3000`).
-
-**Accessing the Application Locally:**
-
-*   Once both the backend and frontend are running, you can access the application by opening your browser and going to the address where your React frontend is running (usually `http://localhost:3000`). The React frontend will communicate with the Flask backend API running in the background.
-
-## Deployment to Vercel
-
-This application is configured for easy deployment to Vercel.
-
-1.  **Vercel CLI:** Ensure you have the Vercel CLI installed. If not, install it following the instructions on the [Vercel website](https://vercel.com/docs/cli).
-
-2.  **Vercel Account & Project:**  Make sure you have a Vercel account and have created a new project on Vercel.
-
-3.  **Deploy from the Repository Root:**
-    Navigate to the root directory of your repository (where `vercel.json` is located) in your terminal and run:
-    ```bash
-    vercel deploy
-    ```
-
-4.  **Follow Vercel CLI Prompts:** The Vercel CLI will guide you through the deployment process, linking your local project to your Vercel project.
-
-5.  **Environment Variables on Vercel:**  After deployment, you need to set the `GOOGLE_PRO_API_KEY` environment variable in your Vercel project settings.
-    *   Go to your Vercel project dashboard.
-    *   Navigate to "Settings" -> "Environment Variables".
-    *   Add a new environment variable:
-        *   **Name:** `GOOGLE_PRO_API_KEY`
-        *   **Value:** Your actual Google Gemini API key.
-
-**After deployment is complete, Vercel will provide you with a deployment URL where your Smart ATS Resume Analyzer application will be live.**  Update the "Deployment Status" badge link at the top of this README with your Vercel project URL.
+*   **Deployment to Vercel:**
+    *   **Challenge:**  Deploying a full-stack application with a React frontend and a Flask backend API to Vercel required specific configuration.
+    *   **Solution:** Created a `vercel.json` configuration file in the project root to define build settings for both the frontend and backend, and to correctly route API requests to the Flask backend when deployed on Vercel.  Environment variables were configured on Vercel to securely manage the Gemini API key.
 
 ## Technologies Used
 
-*   **Backend:**
-    *   Python
-    *   Flask
-    *   google-generativeai
-    *   PyPDF2
-    *   dotenv
-
 *   **Frontend:**
-    *   React
-    *   JavaScript
-    *   HTML/CSS
-
+    *   [React](https://reactjs.org/) - JavaScript library for building user interfaces
+    *   [React Hooks](https://reactjs.org/docs/hooks-intro.html) - For managing state and side effects in functional components
+    *   [Font Awesome](https://fontawesome.com/) - For icons
+    *   [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) - For styling
+*   **Backend:**
+    *   [Flask](https://flask.palletsprojects.com/en/2.3.x/) - Python microframework for web development
+    *   [Python](https://www.python.org/) - Programming language
+    *   [PyPDF2](https://pypdf2.readthedocs.io/en/3.0.0/) - Python library for PDF manipulation and text extraction
+    *   [google-generativeai](https://ai.google.dev/tutorials/python_quickstart) - Google Gemini API Python library
+    *   [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/) - For enabling Cross-Origin Resource Sharing
+*   **AI Model:**
+    *   [Google Gemini API](https://ai.google.dev/) -  Large language model for resume analysis
 *   **Deployment:**
-    *   Vercel
+    *   [Vercel](https://vercel.com/) - Platform for frontend and backend deployment
+*   **Version Control:**
+    *   [Git](https://git-scm.com/) & [GitHub](https://github.com/)
 
-## Future Improvements
+## Setup Instructions
 
-*   **Enhanced Frontend Features:**  Add features like progress indicators, more detailed error handling, and improved result visualization.
-*   **User Authentication:** Implement user accounts to save and manage resume analyses.
-*   **Database Integration:**  Store analysis history and user data in a database.
-*   **More Advanced ATS Features:**  Explore adding features like resume parsing for structured data extraction, job recommendation based on resume analysis, and integration with job boards.
-*   **Model Fine-tuning:** Fine-tune the Gemini model for even better resume analysis accuracy in specific domains.
+**Before you begin:**
+
+*   Make sure you have [Python](https://www.python.org/downloads/) and [Node.js](https://nodejs.org/) installed on your system.
+*   You will need a Google Gemini API key.  Get one from [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey).
+
+**Backend Setup (Flask API):**
+
+1.  **Navigate to the backend directory** in your project (if you have a separate backend folder, otherwise stay in the project root).
+2.  **Create a virtual environment (recommended):**
+    ```bash
+    python -m venv venv
+    ```
+3.  **Activate the virtual environment:**
+    *   **On Windows:** `.\venv\Scripts\activate`
+    *   **On macOS/Linux:** `source venv/bin/activate`
+4.  **Install Python dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *(If you don't have `requirements.txt` yet, create it by running `pip freeze > requirements.txt` after installing the required libraries: `flask`, `PyPDF2`, `google-generativeai`, `flask-cors`)*
+5.  **Set your Gemini API key as an environment variable:**
+    *   **Option 1 (using `.env` file - recommended for local development):**
+        *   Create a `.env` file in your backend directory.
+        *   Add the following line to `.env`, replacing `YOUR_API_KEY` with your actual Gemini API key:
+            ```
+            GOOGLE_PRO_API_KEY=YOUR_API_KEY
+            ```
+        *   You might need to install `python-dotenv` if you don't have it already: `pip install python-dotenv` and ensure you are loading it in your `app.py` as shown in the code.
+    *   **Option 2 (exporting in terminal - less persistent):**
+        *   **On Linux/macOS:** `export GOOGLE_PRO_API_KEY=YOUR_API_KEY`
+        *   **On Windows (Command Prompt):** `set GOOGLE_PRO_API_KEY=YOUR_API_KEY`
+        *   **On Windows (PowerShell):** `$env:GOOGLE_PRO_API_KEY="YOUR_API_KEY"`
+6.  **Run the Flask backend:**
+    ```bash
+    flask run
+    ```
+    The backend API will start running at [http://127.0.0.1:5000](http://127.0.0.1:5000).
+
+**Frontend Setup (React):**
+
+1.  **Navigate to the frontend directory** in your project (if you have a separate frontend folder, otherwise stay in the project root).
+2.  **Install Node.js dependencies:**
+    ```bash
+    npm install  # or yarn install
+    ```
+3.  **Start the React development server:**
+    ```bash
+    npm start  # or yarn start
+    ```
+    The React frontend will open in your browser, usually at [http://localhost:3000](http://localhost:3000).
+
+**Deployment to Vercel:**
+
+1.  **Push your code to a GitHub repository** (you've already done this).
+2.  **Create a Vercel account** at [https://vercel.com/](https://vercel.com/).
+3.  **Import your project** from your GitHub repository to Vercel.
+4.  **Configure Environment Variable:** In your Vercel project settings, add an environment variable named `GOOGLE_PRO_API_KEY` and set its value to your Gemini API key.
+5.  **Vercel should automatically deploy** your application. You will get a `*.vercel.app` URL when deployment is complete.
+
+## Usage Instructions
+
+1.  **Access the application** in your browser at the URL provided by Vercel after deployment (or `http://localhost:3000` if running locally).
+2.  **Paste the Job Description** into the "Job Description" textarea.  The more detailed the job description, the better the analysis.
+3.  **Upload your Resume PDF** by clicking the "Upload Your Resume (PDF)" button and selecting your resume file.
+4.  **Click the "Analyze My Resume" button.**
+5.  **Wait for the analysis to complete.**  The application will display:
+    *   **Job Description Match Score:** A percentage indicating resume-job description alignment.
+    *   **Key Improvement Areas:** A list of keywords from the job description that are missing from your resume.
+    *   **Professional Summary Highlights:** A summary of your resume's profile in relation to the job description.
+
+## Contributing
+
+Feel free to contribute to this project by submitting pull requests, reporting issues, or suggesting improvements.
 
 ## License
 
-[MIT License]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-**Feel free to contribute to this project!**
