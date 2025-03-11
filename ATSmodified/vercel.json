@@ -2,15 +2,19 @@
   "version": 2,
   "builds": [
     {
+      "src": "app.py",
+      "use": "@vercel/python"
+    },
+    {
       "src": "resume-evaluator/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "npm run build",
-        "outputDirectory": "build"
-      }
+      "use": "@vercel/static-build"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "app.py"
+    },
     {
       "src": "/(.*)",
       "dest": "resume-evaluator/build/$1"
