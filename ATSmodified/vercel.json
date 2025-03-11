@@ -7,7 +7,11 @@
     },
     {
       "src": "resume-evaluator/package.json",
-      "use": "@vercel/static-build"
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm run build", 
+        "outputDirectory": "build"       
+      }
     }
   ],
   "routes": [
