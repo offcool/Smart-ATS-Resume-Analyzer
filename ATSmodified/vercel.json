@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/(.*)", "dest": "resume-evaluator/build/$1" }
+    { "src": "/(.*)", "dest": "index.html" }
   ]
 }
