@@ -3,21 +3,24 @@
   "builds": [
     {
       "src": "app.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "requirementsPath": "requirements.txt"
+      }
     },
     {
       "src": "resume-evaluator/package.json",
-      "use": "@vercel/static-build"
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm run build",
+        "outputDirectory": "resume-evaluator/build"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "app.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "resume-evaluator/build/$1"
     },
     {
       "src": "/(.*)",
