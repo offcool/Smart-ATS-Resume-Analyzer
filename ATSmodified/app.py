@@ -7,6 +7,7 @@ import json
 import re
 from flask_cors import CORS
 
+print("Vercel backend app.py starting up...")  # Add this line for logging
 # Load environment variables
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_PRO_API_KEY"))
