@@ -53,7 +53,7 @@ During the development of this application, we encountered and successfully reso
     *   [google-generativeai](https://ai.google.dev/tutorials/python_quickstart) - Google Gemini API Python library
     *   [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/) - For enabling Cross-Origin Resource Sharing
 *   **AI Model:**
-    *   [Google Gemini API](https://ai.google.dev/) -  Large language model for resume analysis
+    *   [Google Gemini API](https://ai.google.dev/) -  Large language model 
 *   **Deployment:**
     *   [Vercel](https://vercel.com/) - Platform for frontend and backend deployment
 *   **Version Control:**
