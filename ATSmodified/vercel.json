@@ -23,6 +23,14 @@
       "dest": "app.py"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "resume-evaluator/build/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "resume-evaluator/build/favicon.ico"
+    },
+    {
       "src": "/(.*)",
       "dest": "resume-evaluator/build/index.html"
     }
