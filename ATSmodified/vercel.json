@@ -2,19 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.py",
-      "use": "@vercel/python",
-      "config": {
-        "requirementsPath": "requirements.txt"
-      }
-    },
-    {
       "src": "resume-evaluator/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run build",
-        "outputDirectory": "resume-evaluator/build"
+        "distDir": "build"
       }
+    },
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -24,7 +20,14 @@
     },
     {
       "src": "/(.*)",
-      "dest": "resume-evaluator/build/index.html"
+      "dest": "resume-evaluator/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "resume-evaluator/index.html"
     }
   ]
 }
