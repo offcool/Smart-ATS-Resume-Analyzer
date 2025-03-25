@@ -2,32 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "resume-evaluator/package.json",
+      "src": "api/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build"
       }
-    },
-    {
-      "src": "app.py",
-      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "app.py"
+      "dest": "api/app.py"
     },
     {
       "src": "/(.*)",
-      "dest": "resume-evaluator/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "resume-evaluator/index.html"
+      "dest": "frontend/$1"
     }
   ]
 }

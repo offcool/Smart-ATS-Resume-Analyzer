@@ -1,45 +1,49 @@
 from flask import Flask, request, jsonify
 import google.generativeai as genai
-import os
-import fitz  # PyMuPDF
-from dotenv import load_dotenv
-import json
-import re
 from flask_cors import CORS
+from dotenv import load_dotenv
+import fitz  # PyMuPDF - Use fitz instead of PyPDF2
 import logging
+import json
 import time
-from typing import Optional, Dict, List, Union, Tuple
+import os
+import re
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Load environment variables (for Vercel, use the UI or vercel.json)
+load_dotenv()  # Still useful for local development
+
 app = Flask(__name__)
-CORS(app, resources={r"/api/analyze": {"origins": "*"}}) #allow all origins
-
-# Load environment variables
-load_dotenv()
-# Get the API key; raise an error if it's missing
-GOOGLE_PRO_API_KEY = os.getenv("GOOGLE_PRO_API_KEY")
-if not GOOGLE_PRO_API_KEY:
-    raise ValueError("GOOGLE_PRO_API_KEY environment variable not set!")
-genai.configure(api_key=GOOGLE_PRO_API_KEY)
+CORS(app)  # Simplified CORS - allow all origins
 
 
-def extract_text_from_pdf(pdf_file_object: fitz.Document) -> str:
+def extract_text_from_pdf(pdf_file_object: fitz.Document) -> str: #fitz.Document is more specific
     """Extracts text from a PDF file object using PyMuPDF (fitz)."""
     text = ""
     try:
+        # Open the PDF document from the file object's content
         doc = fitz.open(stream=pdf_file_object.read(), filetype="pdf")
         for page in doc:
             text += page.get_text()
         doc.close()
     except Exception as e:
         logging.error(f"Error extracting text with PyMuPDF: {e}")
-        return "Error: Could not extract text from PDF."
+        return "Error: Could not extract text from PDF."  # Consistent error handling
     return text.strip()
+
 
 def call_gemini_api(prompt: str, model_name: str = 'gemini-1.5-pro-latest', max_retries: int = 3) -> str:
     """Calls the Gemini API with retries."""
+    api_key = os.getenv("GOOGLE_PRO_API_KEY")
+    if not api_key:
+        logging.error("GOOGLE_PRO_API_KEY not found")
+        return "Error: GOOGLE_PRO_API_KEY not found"  # Consistent error
+
+    genai.configure(api_key=api_key)
+
     for attempt in range(max_retries):
         try:
             model = genai.GenerativeModel(model_name)
@@ -51,6 +55,7 @@ def call_gemini_api(prompt: str, model_name: str = 'gemini-1.5-pro-latest', max_
                 time.sleep(2 ** attempt)  # Exponential backoff
             else:
                 return f"Error: Gemini API error after multiple retries: {e}"
+
 
 def extract_job_keywords(job_description: str) -> str:
     """Extracts key skills and requirements from the job description."""
@@ -65,7 +70,8 @@ def extract_job_keywords(job_description: str) -> str:
     """
     return call_gemini_api(prompt)
 
-def create_analysis_prompt(resume_text:str, job_keywords:str)->str:
+
+def create_analysis_prompt(resume_text: str, job_keywords: str) -> str:
     prompt = f"""
     Act as an **advanced Applicant Tracking System (ATS)** specialized in **Software Engineering, Data Science, and Big Data Engineering**.
     Evaluate the resume against the provided job keywords, considering a **highly competitive job market**.
@@ -96,28 +102,37 @@ def create_analysis_prompt(resume_text:str, job_keywords:str)->str:
     """
     return prompt
 
-def clean_and_parse_json(response_text: str) -> Optional[Dict]:
-    """Cleans and parses the JSON response from Gemini."""
+
+def clean_and_parse_json(response_text: str) -> dict | None:
+    """Cleans and parses the JSON response from Gemini. Handles potential errors."""
     logging.info(f"Raw Response Text before JSON parsing: {response_text}")
+
+    # 1. Remove any text BEFORE the first '{' and AFTER the last '}'
     cleaned_text = re.search(r'\{.*\}', response_text, re.DOTALL)
     if cleaned_text:
         cleaned_text = cleaned_text.group(0)
     else:
-        logging.warning("Warning: No JSON-like content found.")
+        logging.warning("Warning: No JSON-like content with curly braces found.")
         return None
-    cleaned_text = cleaned_text.replace("`json", "").replace("`", "").strip()
+
+    # 2. Remove any `json or ` markers (for markdown)
+    cleaned_text = cleaned_text.replace("`json", "").replace("`", "")
+
+    # 3. Remove leading/trailing whitespace
+    cleaned_text = cleaned_text.strip()
 
     try:
         return json.loads(cleaned_text)
     except json.JSONDecodeError as e:
         logging.error(f"JSON Decode Error AFTER Cleaning: {e}")
         logging.error(f"Problematic JSON string: {cleaned_text}")
-        return None
+        return None  # Or handle as error
+
 
 @app.route('/api/analyze', methods=['POST'])
-async def analyze():
+def analyze():
     """Analyzes a resume against a job description."""
-    logging.info("Received request to /api/analyze")
+    logging.info("Received request to /api/analyze")  # Log request
 
     if 'resume' not in request.files or 'job_description' not in request.form:
         return jsonify({"error": "Invalid input: 'resume' file and 'job_description' text are required."}), 400
@@ -131,26 +146,28 @@ async def analyze():
         return jsonify({"error": "Invalid file type. Only PDF files are allowed."}), 400
 
     resume_text = extract_text_from_pdf(resume_file_object)
-    if resume_text.startswith("Error:"):
+    if resume_text.startswith("Error:"):  # Check for PDF processing error
         return jsonify({"error": resume_text}), 400
 
-    job_keywords = extract_job_keywords(job_description)
+    job_keywords = extract_job_keywords(job_description)  # Extract keywords
     prompt = create_analysis_prompt(resume_text, job_keywords)
     response_text = call_gemini_api(prompt)
 
-    if response_text.startswith("Error:"):
+    if response_text.startswith("Error:"):  # Check for Gemini API error
         return jsonify({"error": response_text}), 500
 
     response_data = clean_and_parse_json(response_text)
     if response_data is None:
-        return jsonify({"error": "Failed to parse Gemini API response."}), 500
+        return jsonify({"error": "Failed to parse Gemini API response.  See server logs for details."}), 500
 
     return jsonify(response_data)
 
 ALLOWED_EXTENSIONS = {'pdf'}
+
 def allowed_file(filename: str) -> bool:
     """Checks if the file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-if __name__ == '__main__':
-    app.run(debug=True, port=int(os.environ.get('PORT', 5001)))
+# --- NO if __name__ == '__main__': BLOCK ---
+# Vercel handles starting the app; you don't need (and shouldn't have)
+# the if __name__ == '__main__':  block when deploying to Vercel.
